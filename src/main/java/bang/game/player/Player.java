@@ -1,9 +1,11 @@
 package bang.game.player;
 
 import bang.game.card.Card;
+import bang.game.card.CardType;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.OptionalInt;
 
 public class Player {
     private Role role;
@@ -11,6 +13,7 @@ public class Player {
     private int maxHitpoints = 0;
     private int hitpoints = 0;   // also hand limit
     private List<Card> cards = new ArrayList<>();
+    private List<Card> cardsInPlay = new ArrayList<>(); // Cards in play on table
     private boolean computerControlled = true;
 
     public Player(){
@@ -20,6 +23,15 @@ public class Player {
     public Player(Role role, Character character){
         setRole(role);
         setCharacter(character);
+    }
+
+    /**
+     * Get the max range from this player's weapons
+     * @return
+     */
+    public int getRange(){
+        OptionalInt max = cardsInPlay.stream().filter(card -> card.getType() == CardType.WEAPON).mapToInt(Card::getRange).max();
+        return max.isPresent()? max.getAsInt(): 1;
     }
 
     public Role getRole() {
@@ -74,5 +86,9 @@ public class Player {
 
     public void setComputerControlled(boolean computerControlled) {
         this.computerControlled = computerControlled;
+    }
+
+    public List<Card> getCardsInPlay() {
+        return cardsInPlay;
     }
 }

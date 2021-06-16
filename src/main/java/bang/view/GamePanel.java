@@ -10,6 +10,9 @@ public class GamePanel extends JPanel {
     private View view;
 
     private TablePanel tablePanel;
+    private PlayerCardsPanel playerCardsPanel;
+
+    private JButton btnPass;
 
     public GamePanel(Model model, View view){
         super();
@@ -17,9 +20,17 @@ public class GamePanel extends JPanel {
         this.view = view;
 
         tablePanel = new TablePanel(model, view);
+        playerCardsPanel = new PlayerCardsPanel(model, view);
+
+        btnPass = new JButton("Pass");
+
+        JPanel southpanel = new JPanel(new BorderLayout());
+        southpanel.add(playerCardsPanel, BorderLayout.CENTER);
+        southpanel.add(btnPass, BorderLayout.EAST);
 
         setLayout(new BorderLayout());
         add(tablePanel, BorderLayout.CENTER);
+        add(southpanel, BorderLayout.SOUTH);
     }
 
     public void refresh(){
@@ -28,5 +39,13 @@ public class GamePanel extends JPanel {
 
     public TablePanel getTablePanel() {
         return tablePanel;
+    }
+
+    public PlayerCardsPanel getPlayerCardsPanel() {
+        return playerCardsPanel;
+    }
+
+    public JButton getBtnPass() {
+        return btnPass;
     }
 }

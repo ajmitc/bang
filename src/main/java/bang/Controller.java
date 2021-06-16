@@ -10,6 +10,10 @@ import bang.util.Util;
 import bang.view.View;
 import bang.view.ViewUtil;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.*;
 
 public class Controller {
@@ -21,6 +25,30 @@ public class Controller {
     public Controller(Model model, View view){
         this.model = model;
         this.view = view;
+
+        view.getGamePanel().getPlayerCardsPanel().addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                super.mouseClicked(e);
+                if (model.getGame().getPhaseStep() == PhaseStep.PLAY_CARDS && e.getClickCount() >= 2){
+                    Card card = view.getGamePanel().getPlayerCardsPanel().getSelectedCard(e.getX(), e.getY());
+                    if (card != null){
+                        playerPlayCard(card);
+                        run();
+                    }
+                }
+            }
+        });
+
+        view.getGamePanel().getBtnPass().addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (model.getGame().getPhaseStep() == PhaseStep.PLAY_CARDS) {
+                    currentPlayerPassed = true;
+                    run();
+                }
+            }
+        });
     }
 
     public void run(){
@@ -161,15 +189,81 @@ public class Controller {
         }
     }
 
+    private void playerPlayCard(Card card){
+        // Remove from player's hand
+        model.getGame().getHumanPlayer().getCards().remove(card);
+
+        // Handle card effect
+        handleCardType(card, model.getGame().getHumanPlayer());
+
+        // Discard card
+        if (card.isDiscardOnPlay()) {
+            model.getGame().getDeck().discard(card);
+        }
+        // Or play on table
+        else {
+            model.getGame().getHumanPlayer().getCardsInPlay().add(card);
+        }
+    }
+
+    private void handleCardType(Card card, Player cardOwner){
+        switch (card.getEffect()){
+            case BEER_6:
+            case BEER_7:
+            case BEER_8:
+            case BEER_9:
+            case BEER_T:
+            case BEER_J:
+                // Gain 1 health
+                cardOwner.adjHitpoints(1);
+                break;
+            case BARREL_K:
+            case BARREL_Q:{
+                if (draw(card)) {
+                    // TODO Miss!
+                }
+                break;
+            }
+            case REMINGTON:{
+                break;
+            }
+        }
+    }
+
     /**
      * Have the computer take the current player's turn
      * @return true if a card was played, false if the player passes
      */
     private boolean computerPlayCard(){
+        // TODO Computer choose card to play
+        int index = Util.getRandInt(0, model.getGame().getCurrentPlayer().getCards().size());
+        Card card = model.getGame().getCurrentPlayer().getCards().remove(index);
+
+        handleCardType(card, model.getGame().getCurrentPlayer());
+
+        // Discard card
+        if (card.isDiscardOnPlay()) {
+            model.getGame().getDeck().discard(card);
+        }
+        // Or play on table
+        else {
+            model.getGame().getCurrentPlayer().getCardsInPlay().add(card);
+        }
+
         return true;
     }
 
     private void computerDiscard(){
+        while (model.getGame().getCurrentPlayer().getCards().size() > model.getGame().getCurrentPlayer().getHitpoints()){
+            Card card = model.getGame().getCurrentPlayer().getCards().remove(0);
+            model.getGame().getDeck().discard(card);
+        }
+    }
 
+
+    private boolean draw(Card origCard){
+        Card topCard = model.getGame().getDeck().draw();
+        model.getGame().getDeck().discard(topCard);
+        return origCard.getSuit() == topCard.getSuit() && origCard.getValue() == topCard.getValue();
     }
 }
