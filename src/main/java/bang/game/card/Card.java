@@ -10,24 +10,30 @@ public class Card {
     public static final int KING  = 13;
     public static final int ACE   = 14;
 
-    private boolean discardOnPlay = true;
     private CardType type;
     private CardEffect effect;
     private BufferedImage image;
     private PokerCardSuit suit;
     private int value;
     private int range = 1;  // Modified by weapon cards
+    private boolean discardOnPlay = true;
 
     public Card(CardType type, CardEffect effect){
         this(type, effect, null, 0);
     }
 
     public Card(CardType type, CardEffect effect, PokerCardSuit suit, int value){
+        this(type, effect, suit, value, 1, true);
+    }
+
+    public Card(CardType type, CardEffect effect, PokerCardSuit suit, int value, int range, boolean discardOnPlay){
         this.type = type;
         this.effect = effect;
         this.image = effect.getImageFilename() != null? ImageUtil.get(effect.getImageFilename()): null;
         this.suit = suit;
         this.value = value;
+        this.range = range;
+        this.discardOnPlay = discardOnPlay;
     }
 
     public CardType getType() {

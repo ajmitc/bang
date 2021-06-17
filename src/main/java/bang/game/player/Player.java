@@ -1,6 +1,7 @@
 package bang.game.player;
 
 import bang.game.card.Card;
+import bang.game.card.CardEffect;
 import bang.game.card.CardType;
 
 import java.util.ArrayList;
@@ -16,6 +17,8 @@ public class Player {
     private List<Card> cardsInPlay = new ArrayList<>(); // Cards in play on table
     private boolean computerControlled = true;
 
+    private boolean skipTurn = false;
+
     public Player(){
 
     }
@@ -29,9 +32,32 @@ public class Player {
      * Get the max range from this player's weapons
      * @return
      */
-    public int getRange(){
+    public int getMaximumRange(){
         OptionalInt max = cardsInPlay.stream().filter(card -> card.getType() == CardType.WEAPON).mapToInt(Card::getRange).max();
-        return max.isPresent()? max.getAsInt(): 1;
+        int range = max.isPresent()? max.getAsInt(): 1;
+        for (Card card: cardsInPlay){
+            if (card.getEffect() == CardEffect.SCOPE){
+                range += 1;
+            }
+        }
+        if (character == Character.ROSE_DOOLAN)
+            range += 1;
+        return range;
+    }
+
+    /**
+     * Get the modifier when another player is targeting this player
+     * For example, a MUSTANG will cause this player to be +1 distance from other players
+     * @return
+     */
+    public int getOtherPlayerRangeModifier(){
+        int mod = 0;
+        for (Card card: cardsInPlay){
+            if (card.getType() == CardType.MUSTANG){
+                mod += 1;
+            }
+        }
+        return mod;
     }
 
     public Role getRole() {
@@ -90,5 +116,17 @@ public class Player {
 
     public List<Card> getCardsInPlay() {
         return cardsInPlay;
+    }
+
+    public boolean isSkipTurn() {
+        return skipTurn;
+    }
+
+    public void setSkipTurn(boolean skipTurn) {
+        this.skipTurn = skipTurn;
+    }
+
+    public String toString(){
+        return character.getName();
     }
 }
