@@ -7,5 +7,6 @@ public enum PhaseStep {
     PLAY_DYNAMITE,
     PLAY_DRAW_2_CARDS,
     PLAY_CARDS,
+    PLAY_CARDS_CHOOSE_TARGET,
     PLAY_DISCARD
 }

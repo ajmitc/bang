@@ -66,4 +66,8 @@ public class Card {
     public void setRange(int range) {
         this.range = range;
     }
+
+    public String toString(){
+        return effect.name();
+    }
 }

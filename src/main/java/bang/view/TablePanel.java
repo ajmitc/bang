@@ -49,6 +49,20 @@ public class TablePanel extends JPanel {
         });
     }
 
+    public Player getSelectedPlayer(int mx, int my){
+        if (!playerDrawAreas.isEmpty()) {
+            List<Player> orderedPlayers = model.getGame().inPlayerOrderHumanFirst();
+            List<Point> points = playerDrawAreas.get(model.getGame().getPlayers().size());
+            for (int i = 0; i < points.size(); ++i) {
+                Point p = points.get(i);
+                if (mx >= p.x && mx < p.x + PLAYER_DRAW_AREA_WIDTH && my >= p.y && my < p.y + PLAYER_DRAW_AREA_HEIGHT) {
+                    return orderedPlayers.get(i);
+                }
+            }
+        }
+        return null;
+    }
+
     public void refresh(){
         repaint();
     }
@@ -88,13 +102,7 @@ public class TablePanel extends JPanel {
             // TODO Finish this
         }
 
-        int playerIndex = model.getGame().getPlayers().indexOf(model.getGame().getCurrentPlayer());
-        List<Player> orderedPlayers = new ArrayList<>();
-        while (orderedPlayers.size() < model.getGame().getPlayers().size()){
-            orderedPlayers.add(model.getGame().getPlayers().get(playerIndex));
-            playerIndex = (playerIndex + 1) % model.getGame().getPlayers().size();
-        }
-
+        List<Player> orderedPlayers = model.getGame().inPlayerOrderHumanFirst();
         for (int i = 0; i < orderedPlayers.size(); ++i){
             Point pt = playerDrawAreas.get(model.getGame().getPlayers().size()).get(i);
             drawPlayer(graphics, orderedPlayers.get(i), pt);

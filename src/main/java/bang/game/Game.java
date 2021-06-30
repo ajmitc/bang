@@ -149,6 +149,10 @@ public class Game {
         return orderedPlayers;
     }
 
+    public List<Player> inPlayerOrderHumanFirst(){
+        return inPlayerOrder(getHumanPlayer());
+    }
+
     public List<Player> getOtherPlayers(Player player){
         return players.stream().filter(player1 -> player1 != player).collect(Collectors.toList());
     }

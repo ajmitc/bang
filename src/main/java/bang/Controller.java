@@ -25,7 +25,11 @@ public class Controller {
     private Model model;
     private View view;
 
+    // Has the current player passed their turn?
     private boolean currentPlayerPassed = false;
+
+    // Track the card that was just played.  This is used for cards that require additional input from user (ie. selecting the target of a BANG card)
+    private Card playedCard;
 
     public Controller(Model model, View view){
         this.model = model;
@@ -39,6 +43,22 @@ public class Controller {
                     Card card = view.getGamePanel().getPlayerCardsPanel().getSelectedCard(e.getX(), e.getY());
                     if (card != null){
                         playerPlayCard(card);
+                        run();
+                    }
+                }
+            }
+        });
+
+        view.getGamePanel().getTablePanel().addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                super.mouseClicked(e);
+                if (model.getGame().getPhaseStep() == PhaseStep.PLAY_CARDS_CHOOSE_TARGET && e.getClickCount() >= 2){
+                    Player selected = view.getGamePanel().getTablePanel().getSelectedPlayer(e.getX(), e.getY());
+                    if (selected != null) {
+                        playerPlayCard(playedCard, selected);
+                        model.getGame().setPhaseStep(PhaseStep.PLAY_CARDS);
+                        playedCard = null;
                         run();
                     }
                 }
@@ -150,6 +170,8 @@ public class Controller {
                             }
                             break;
                         }
+                        case PLAY_CARDS_CHOOSE_TARGET:
+                            return;
                         case PLAY_DISCARD:{
                             int handLimit = model.getGame().getCurrentPlayer().getHitpoints();
                             if (model.getGame().getCurrentPlayer().getCards().size() > handLimit){
@@ -225,24 +247,46 @@ public class Controller {
     }
 
     private void playerPlayCard(Card card){
-        // Remove from player's hand
-        model.getGame().getHumanPlayer().getCards().remove(card);
+        playerPlayCard(card, null);
+    }
 
+    private void playerPlayCard(Card card, Player targetPlayer){
         // Handle card effect
-        handleCardType(card, model.getGame().getHumanPlayer());
+        if (handleCardType(card, model.getGame().getHumanPlayer(), targetPlayer)) {
+            // Remove from player's hand
+            model.getGame().getHumanPlayer().getCards().remove(card);
 
-        // Discard card
-        if (card.isDiscardOnPlay()) {
-            model.getGame().getDeck().discard(card);
-        }
-        // Or play on table
-        else {
-            model.getGame().getHumanPlayer().getCardsInPlay().add(card);
+            // Discard card
+            if (card.isDiscardOnPlay()) {
+                model.getGame().getDeck().discard(card);
+            }
+            // Or play on table
+            else {
+                model.getGame().getHumanPlayer().getCardsInPlay().add(card);
+            }
         }
     }
 
-    private void handleCardType(Card card, Player cardOwner){
+    private boolean handleCardType(Card card, Player cardOwner){
+        return handleCardType(card, cardOwner, null);
+    }
+
+    private boolean handleCardType(Card card, Player cardOwner, Player targetPlayer){
         switch (card.getEffect()){
+            case BANG_2C:
+            case BANG_2D:
+            case BANG_3C:
+            case BANG_3D: {
+                if (targetPlayer != null) {
+                    return handleBang(cardOwner, targetPlayer);
+                }
+                else {
+                    playedCard = card;
+                    model.getGame().setPhaseStep(PhaseStep.PLAY_CARDS_CHOOSE_TARGET);
+                    // Return false to prevent discarding
+                    return false;
+                }
+            }
             case BEER_6:
             case BEER_7:
             case BEER_8:
@@ -331,6 +375,8 @@ public class Controller {
             case MUSTANG_9H:
                 break;
         }
+        // Tell the caller that this card was handled properly
+        return true;
     }
 
     /**
@@ -488,5 +534,58 @@ public class Controller {
                 targetPlayer.getCards().remove(card);
             }
         }
+    }
+
+    private boolean handleBang(Player cardOwner, Player targetPlayer){
+        // Determine distance to target player
+        List<Player> orderedPlayers = model.getGame().inPlayerOrder(cardOwner);
+
+        // Shooting player is at index 0
+        int targetPlayerIndex = orderedPlayers.indexOf(targetPlayer);
+
+        // if there are 4 or 5 players, no player is more than 2 away
+        // If there are 6 or 7 players, no player is more than 3 away
+        int distance = Math.min(targetPlayerIndex, orderedPlayers.size() <= 5? 2: 3);
+
+        // Get any range modifiers from the target player
+        int targetRangeModifer = targetPlayer.getOtherPlayerRangeModifier();
+        distance += targetRangeModifer;
+
+        // Get the cardOwner's maximum range (based on their weapon)
+        int maxRange = cardOwner.getMaximumRange();
+
+        // Check that cardOwner can shoot target player
+        if (distance > maxRange){
+            // Card owner doesn't have range to this player
+            ViewUtil.popupNotify("Target player is out of range!");
+            return false;
+        }
+
+        // Check if target player can play Missed! card
+        boolean hitTargetPlayer = true;
+        List<Card> missedCards = targetPlayer.getCards().stream().filter(card -> card.getType() == CardType.MISSED).collect(Collectors.toList());
+        if (!missedCards.isEmpty()){
+            if (targetPlayer.isComputerControlled()){
+                targetPlayer.getCards().remove(missedCards.get(0));
+                model.getGame().getDeck().discard(missedCards.get(0));
+                ViewUtil.popupNotify(targetPlayer.getCharacter().getName() + " plays a Missed! card");
+                hitTargetPlayer = false;
+            }
+            else {
+                if (ViewUtil.popupConfirm("BANG!", "Do you want to play a Missed! card?")){
+                    Card selected = (Card) ViewUtil.popupDropdown("BANG!", "Choose Missed! card to play", missedCards.toArray(new Card[0]));
+                    targetPlayer.getCards().remove(selected);
+                    model.getGame().getDeck().discard(selected);
+                    hitTargetPlayer = false;
+                }
+            }
+        }
+
+        if (hitTargetPlayer) {
+            targetPlayer.adjHitpoints(-1);
+            ViewUtil.popupNotify(cardOwner.getCharacter().getName() + " shot " + targetPlayer.getCharacter().getName() + "!");
+        }
+
+        return true;
     }
 }
