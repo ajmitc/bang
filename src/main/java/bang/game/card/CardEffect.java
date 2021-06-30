@@ -76,7 +76,7 @@ public enum CardEffect {
     // Choose a player to discard 1 card
     CAT_BALOU_9D("CATBALOU_9Q.JPG"),
     CAT_BALOU_JD("CATBALOU_JQ.JPG"),
-    CAT_BALOU_KD("CATBALOU_KQ.JPG"),
+    CAT_BALOU_KD("CATBALOU_KC.JPG"),
     CAT_BALOU_TD("CATBALOU_TQ.JPG"),
 
     JAIL_4H("PRIGIONE_4.JPG"),

@@ -3,24 +3,29 @@ package bang.view;
 import bang.Model;
 import bang.game.card.Card;
 import bang.game.player.Player;
+import bang.util.ImageUtil;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.util.List;
 
 public class PlayerCardsPanel extends JPanel {
+    private static final int CARD_WIDTH = 150;
+
     private Model model;
     private View view;
-    private int cardWidth;
 
     public PlayerCardsPanel(Model model, View view){
         super();
+        setMinimumSize(new Dimension(CARD_WIDTH, 240));
+        setPreferredSize(new Dimension(CARD_WIDTH, 240));
         this.model = model;
         this.view = view;
     }
 
     public Card getSelectedCard(int mx, int my){
-        int index = mx / cardWidth;
+        int index = mx / CARD_WIDTH;
         if (index >= 0 && index < model.getGame().getHumanPlayer().getCards().size()){
             return model.getGame().getHumanPlayer().getCards().get(index);
         }
@@ -36,8 +41,8 @@ public class PlayerCardsPanel extends JPanel {
 
         for (int i = 0; i < cards.size(); ++i){
             Card card = cards.get(i);
-            graphics.drawImage(card.getImage(), i * card.getImage().getWidth(), 0, null);
-            cardWidth = card.getImage().getWidth();
+            BufferedImage bufferedImage = ImageUtil.get(card.getEffect().getImageFilename(), CARD_WIDTH, card.getEffect().getImageFilename() + "-" + CARD_WIDTH);
+            graphics.drawImage(bufferedImage, i * bufferedImage.getWidth(), 0, null);
         }
     }
 }

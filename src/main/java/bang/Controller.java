@@ -1,5 +1,6 @@
 package bang;
 
+import bang.game.Game;
 import bang.game.Phase;
 import bang.game.PhaseStep;
 import bang.game.card.Card;
@@ -51,6 +52,22 @@ public class Controller {
                     currentPlayerPassed = true;
                     run();
                 }
+            }
+        });
+
+        view.getMainMenuPanel().getBtnExit().addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.exit(0);
+            }
+        });
+
+        view.getMainMenuPanel().getBtnNewGame().addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                model.setGame(new Game());
+                view.showGame();
+                run();
             }
         });
     }
